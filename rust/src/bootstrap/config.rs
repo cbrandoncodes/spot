@@ -49,6 +49,13 @@ pub struct ResendSettings {
 }
 
 #[derive(Clone, Debug)]
+pub struct SupabaseSettings {
+    pub url: String,
+    pub secret_key: SecretString,
+    pub main_bucket_name: String,
+}
+
+#[derive(Clone, Debug)]
 pub struct AuthSettings {
     pub secret: SecretString,
     pub base_url: String,
@@ -63,6 +70,7 @@ pub struct Settings {
     pub http_addr: SocketAddr,
     pub database: DatabaseSettings,
     pub auth: AuthSettings,
+    pub supabase: SupabaseSettings,
 }
 
 impl Settings {
@@ -94,6 +102,11 @@ impl Settings {
             api_key: required("SPOT_RESEND_API_KEY")?.into(),
             from_email: required("SPOT_EMAIL_FROM")?,
         };
+        let supabase = SupabaseSettings {
+            url: required("SUPABASE_URL")?,
+            secret_key: required("SUPABASE_SECRET_KEY")?.into(),
+            main_bucket_name: required("SUPABASE_MAIN_BUCKET_NAME")?,
+        };
 
         Ok(Self {
             environment,
@@ -106,6 +119,7 @@ impl Settings {
                 google,
                 resend,
             },
+            supabase,
         })
     }
 

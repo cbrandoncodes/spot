@@ -17,7 +17,9 @@ better-auth = { git = "https://github.com/better-auth-rs/better-auth-rs", rev = 
     "rustls",
     "seaorm2",
 ] }
+chrono = { version = "0.4", features = ["serde"] }
 dotenvy = "0.15"
+garde = { version = "0.23", features = ["derive"] }
 secrecy = "0.10"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -40,6 +42,7 @@ tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+uuid = { version = "1", features = ["serde", "v7"] }
 
 [lints.rust]
 unsafe_code = "forbid"

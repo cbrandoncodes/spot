@@ -132,6 +132,17 @@ Do not use one struct for every layer.
 Conversions between them should be explicit. Prevent impossible states with
 value objects where useful, but avoid ceremonial wrappers with no invariant.
 
+Use `garde` for declarative, synchronous validation. HTTP DTOs may apply broad
+transport limits before conversion, while domain value objects own the exact
+business invariant and keep their inner value private. A domain constructor
+must call validation itself; callers must not be able to create an unchecked
+value and forget to validate it. Use `FromStr` for naturally textual values and
+`TryFrom<String>` when consuming owned input can avoid a copy. Request DTOs may
+use clearly named conversion methods when a conversion trait adds ceremony
+without making the boundary clearer. Checks requiring I/O, such as username
+uniqueness, belong in the application service, and critical integrity
+constraints must still be enforced by PostgreSQL.
+
 ### Errors
 
 - Use `thiserror` for typed domain, application, and infrastructure errors.
@@ -164,7 +175,7 @@ an event or push notification before the database commit succeeds.
 | IDs | UUIDv7 generated in Rust | Time-sortable, client-independent identifiers; never expose sequential IDs. |
 | Date/time | `chrono` at SeaORM boundaries; `timestamptz` in Postgres | Store instants in UTC; localize only at presentation/scheduling edges. |
 | Serialization | Serde / `serde_json` | JSON at API and event boundaries; typed columns for queryable data. |
-| Validation | `garde` or small domain constructors | Transport shape validation first; business validation in the domain. |
+| Validation | `garde` plus domain value objects | Derive transport guards on DTOs; construct normalized domain values with `TryFrom`/`FromStr`; keep I/O-dependent checks in application services. |
 | API contract | OpenAPI generated with `utoipa` | Commit the generated contract and check breaking changes in CI. |
 | Configuration | Typed `Settings` loaded from environment | Fail fast at startup; secrets never get defaults or enter logs. |
 | Secrets in memory | `secrecy` | Reduce accidental debug/log exposure. |
@@ -173,7 +184,7 @@ an event or push notification before the database commit succeeds.
 | Social sign-in | Better Auth Google OAuth | Apple is intentionally deferred; provider tokens are encrypted at rest. |
 | Sessions | Better Auth opaque database sessions | Secure cookies for web and bearer tokens for native clients; per-device revocation is enabled. |
 | Observability | `tracing` + `tracing-subscriber`, then OpenTelemetry exporter | Structured spans with request/job IDs; never log tokens or sensitive fitness data. |
-| Object storage | S3-compatible storage via presigned operations | Store object keys and metadata in Postgres, never large media blobs. |
+| Object storage | Supabase Storage through a server-owned HTTP client | Store object keys and metadata in Postgres, never large media blobs. Use the public `main` bucket only for intentionally public media such as avatars. |
 | Background work | PostgreSQL job/outbox tables with `FOR UPDATE SKIP LOCKED` | Add a dedicated broker only after measured throughput demands it. |
 | Caching | None initially | Add Redis only for demonstrated cache, coordination, or fan-out needs. |
 | Search | PostgreSQL full-text search + `pg_trgm` | Enough for usernames, gyms, exercises, and programs initially. |

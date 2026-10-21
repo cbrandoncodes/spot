@@ -42,6 +42,7 @@ pub fn router(
         .nest("/api/auth", auth_routes)
         .merge(modules::auth::http::routes())
         .merge(modules::health::http::routes())
+        .merge(modules::profile::http::routes())
         .with_state(state)
         .layer(cors)
         .layer(TraceLayer::new_for_http()))
