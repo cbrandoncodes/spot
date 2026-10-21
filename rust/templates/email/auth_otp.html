@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light only">
+    <title>Spot authentication code</title>
+    <style>
+      @media only screen and (max-width: 620px) {
+        .shell { padding: 20px 12px !important; }
+        .card { border-radius: 20px !important; }
+        .content { padding: 36px 24px 32px !important; }
+        .code { font-size: 34px !important; letter-spacing: 7px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0;padding:0;background:#F8F9FC;color:#111827;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">{{ preheader }}</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#F8F9FC;">
+      <tr>
+        <td class="shell" align="center" style="padding:48px 20px;">
+          <table class="card" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background:#FFFFFF;border:1px solid #E4E7EC;border-radius:24px;overflow:hidden;">
+            <tr>
+              <td style="height:6px;background:#063DB2;font-size:0;line-height:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="content" style="padding:44px 48px 40px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td>
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                          <td valign="middle"><img src="{{ logo_url }}" width="48" height="48" alt="Spot" style="display:block;width:48px;height:48px;border:0;border-radius:14px;"></td>
+                          <td valign="middle" style="padding-left:12px;color:#063DB2;font-family:Sora,Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:23px;font-weight:700;letter-spacing:-0.5px;">Spot</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding-top:48px;color:#063DB2;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">{{ eyebrow }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding-top:12px;color:#111827;font-family:Sora,Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:34px;font-weight:700;line-height:1.2;letter-spacing:-1px;">{{ heading }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding-top:16px;color:#667085;font-size:16px;line-height:1.6;">{{ instruction }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding-top:28px;">
+                      <div class="code" style="padding:22px 16px;border:1px solid #E4E7EC;border-radius:18px;background:#EEF0FF;color:#052E86;font-family:'SFMono-Regular',Consolas,'Liberation Mono',monospace;font-size:40px;font-weight:700;line-height:1;text-align:center;letter-spacing:11px;font-variant-numeric:tabular-nums;">{{ code }}</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding-top:18px;color:#667085;font-size:14px;line-height:1.6;">This code expires in <strong style="color:#111827;">5 minutes</strong> and can only be used once.</td>
+                  </tr>
+                  <tr>
+                    <td style="padding-top:36px;">
+                      <div style="height:1px;background:#E4E7EC;font-size:0;line-height:0;">&nbsp;</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding-top:24px;color:#667085;font-size:13px;line-height:1.6;">If you didn’t request this, you can safely ignore this email. Never share this code with anyone—even someone claiming to be from Spot.</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 48px;background:#052E86;color:#EEF0FF;font-size:12px;line-height:1.5;">
+                <span style="color:#FFFFFF;font-weight:700;">Never train lost.</span>
+              </td>
+            </tr>
+          </table>
+          <div style="padding-top:20px;color:#667085;font-size:12px;line-height:1.5;">Spot · Guide · Progress · Connect</div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

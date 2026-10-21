@@ -1,0 +1,12 @@
+SPOT
+Never train lost.
+
+{{ heading }}
+
+{{ instruction }}
+
+{{ code }}
+
+This code expires in 5 minutes and can only be used once.
+
+If you didn't request this, you can safely ignore this email. Never share this code with anyone—even someone claiming to be from Spot.

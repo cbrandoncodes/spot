@@ -61,6 +61,24 @@ cookie or `Authorization: Bearer <session-token>`.
 For Google, register `{SPOT_AUTH_BASE_URL}/api/auth/callback/google` as an
 authorized redirect URI.
 
+## Authentication email templates
+
+Authentication emails have separate HTML and plain-text templates in
+`templates/email/auth_otp.html` and `templates/email/auth_otp.txt`. They are
+compiled into the API binary and rendered by the auth infrastructure, while the
+Resend adapter is responsible only for delivery. Keep product copy and visual
+changes in those template files rather than embedding markup in provider code.
+Their colors, typography, shape, hierarchy, and voice must follow the repository
+root `Spot-DESIGN.md`, which is the authoritative design reference.
+
+The renderer supplies purpose-specific copy for sign-in, email verification,
+password reset, and email changes. Any value inserted into HTML must remain
+escaped, and every email must retain an equivalent plain-text version.
+
+The approved logo is retained in the repository root `assets/` directory and
+delivered to email clients from ImageKit. Keep the CDN URL centralized in the
+email renderer rather than repeating it in templates or provider adapters.
+
 Local/test environments run migrations on API startup by default. Staging and
 production should run the migration binary as a release step and leave
 `SPOT_DATABASE_RUN_MIGRATIONS=false`.
