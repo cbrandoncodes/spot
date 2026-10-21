@@ -1,0 +1,10 @@
+[env]
+# better-auth-rs pins pre-generated ICU 78 bindings for locale-compatible
+# database sorting. Railway/container images must install ICU 78 as well.
+RUST_ICU_MAJOR_VERSION_NUMBER = "78"
+
+[target.aarch64-apple-darwin]
+rustflags = ["-L", "native=/opt/homebrew/opt/icu4c@78/lib"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-L", "native=/usr/local/opt/icu4c@78/lib"]

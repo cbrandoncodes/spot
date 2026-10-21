@@ -21,6 +21,10 @@ async fn main() -> anyhow::Result<()> {
             .context("failed to run database migrations")?;
     }
 
+    let auth = spot_backend::modules::auth::service::build(&settings.auth, pool.clone())
+        .await
+        .context("failed to initialize authentication")?;
+
     let listener = tokio::net::TcpListener::bind(settings.http_addr)
         .await
         .context("failed to bind HTTP listener")?;
@@ -30,7 +34,10 @@ async fn main() -> anyhow::Result<()> {
         "Spot API listening"
     );
 
-    axum::serve(listener, http::router(AppState { db: pool }))
+    let app = http::router(AppState { db: pool, auth }, &settings.auth.trusted_origins)
+        .context("SPOT_AUTH_TRUSTED_ORIGINS contains an invalid HTTP origin")?;
+
+    axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
         .context("HTTP server failed")

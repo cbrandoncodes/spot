@@ -10,27 +10,36 @@ path = "src/lib.rs"
 
 [dependencies]
 anyhow = "1"
+async-trait = "0.1"
 axum = "0.8"
+better-auth = { git = "https://github.com/better-auth-rs/better-auth-rs", rev = "23c89f4e51999fe5767804879c82c60249cf9f84", default-features = false, features = [
+    "axum",
+    "rustls",
+    "seaorm2",
+] }
 dotenvy = "0.15"
 secrecy = "0.10"
 serde = { version = "1", features = ["derive"] }
-sqlx = { version = "0.9", default-features = false, features = [
-    "json",
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+sea-orm = { version = "=2.0.0-rc.37", default-features = false, features = [
     "macros",
-    "migrate",
-    "postgres",
-    "runtime-tokio",
-    "time",
-    "tls-rustls-ring-webpki",
-    "uuid",
+    "runtime-tokio-rustls",
+    "sqlx-postgres",
+    "with-chrono",
+    "with-uuid",
+] }
+# Derive output and runtime traits must stay on the same SeaORM prerelease.
+sea-orm-macros = "=2.0.0-rc.37"
+sea-orm-migration = { version = "=2.0.0-rc.37", default-features = false, features = [
+    "runtime-tokio-rustls",
+    "sqlx-postgres",
 ] }
 thiserror = "2"
-time = { version = "0.3", features = ["serde"] }
 tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "time"] }
-tower-http = { version = "0.6", features = ["trace"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-uuid = { version = "1", features = ["serde", "v7"] }
 
 [lints.rust]
 unsafe_code = "forbid"

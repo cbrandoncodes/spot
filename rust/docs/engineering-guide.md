@@ -34,10 +34,10 @@ Recommended source layout:
 ```text
 rust/
 ├── Cargo.toml
-├── migrations/
 ├── queries/                    # cross-domain/admin read models only
 ├── src/
 │   ├── lib.rs
+│   ├── migration/              # ordered SeaORM migrations
 │   ├── bin/
 │   │   ├── api.rs
 │   │   └── worker.rs
@@ -80,7 +80,7 @@ HTTP adapter -> application use case -> domain
                   PostgreSQL/external APIs
 ```
 
-- Domain code must not import Axum, SQLx, HTTP DTOs, or vendor SDKs.
+- Domain code must not import Axum, SeaORM, HTTP DTOs, or vendor SDKs.
 - HTTP handlers authenticate, validate, call one application use case, and map
   its result. They do not contain business rules or SQL.
 - Application use cases coordinate domain behavior, repositories, transactions,
@@ -97,7 +97,7 @@ HTTP adapter -> application use case -> domain
 
 Executable application SQL may exist only in:
 
-- `migrations/` for schema changes;
+- `src/migration/` for ordered schema changes;
 - `modules/<domain>/infrastructure/postgres/` for domain-owned persistence; or
 - root `queries/` for explicitly named cross-domain read models such as admin
   reporting.
@@ -105,7 +105,8 @@ Executable application SQL may exist only in:
 No SQL is allowed in handlers, application services, domain code, generic
 helpers, or tests other than narrowly scoped test setup.
 
-Prefer `sqlx::query_file!` / `query_file_as!` for substantial queries. A short,
+Prefer SeaORM entities for straightforward writes and query construction. Keep
+substantial or performance-sensitive SQL in module-owned `.sql` files. A short,
 single-purpose query may be inline only inside the owning Postgres repository.
 Query file names describe intent, for example `find_active_program_for_user.sql`.
 
@@ -159,17 +160,18 @@ an event or push notification before the database commit succeeds.
 | HTTP API | Axum + Tower middleware | REST/JSON under `/v1`; thin handlers and nested domain routers. |
 | Live transport | Axum WebSockets | Buddy workouts and chat need bidirectional traffic. |
 | Database | PostgreSQL | System of record for all durable product data. |
-| Database access | SQLx | Explicit SQL, typed mapping, pools, migrations, and compile-time checking. |
+| Database access | SeaORM 2 + SeaORM migrations | Shared by Better Auth and domain repositories; entities and migrations remain application-owned. |
 | IDs | UUIDv7 generated in Rust | Time-sortable, client-independent identifiers; never expose sequential IDs. |
-| Date/time | `time` crate; `timestamptz` in Postgres | Store instants in UTC; localize only at presentation/scheduling edges. |
+| Date/time | `chrono` at SeaORM boundaries; `timestamptz` in Postgres | Store instants in UTC; localize only at presentation/scheduling edges. |
 | Serialization | Serde / `serde_json` | JSON at API and event boundaries; typed columns for queryable data. |
 | Validation | `garde` or small domain constructors | Transport shape validation first; business validation in the domain. |
 | API contract | OpenAPI generated with `utoipa` | Commit the generated contract and check breaking changes in CI. |
 | Configuration | Typed `Settings` loaded from environment | Fail fast at startup; secrets never get defaults or enter logs. |
 | Secrets in memory | `secrecy` | Reduce accidental debug/log exposure. |
-| Password hashing | Argon2id via `argon2` | Use per-password salts and versioned parameters. |
-| Google/Apple sign-in | OpenID Connect/OAuth libraries behind an identity provider port | Verify issuer, audience, nonce, and provider keys server-side. |
-| Access sessions | Short-lived access tokens plus rotated opaque refresh sessions | Store only hashed refresh secrets; support per-device revocation. |
+| Authentication | `better-auth-rs`, pinned to an exact Git revision | Application-owned SeaORM schema; revisit the alpha dependency before production launch. |
+| Password hashing | Better Auth's versioned scrypt implementation | Never implement credential hashing in Spot application code. |
+| Social sign-in | Better Auth Google OAuth | Apple is intentionally deferred; provider tokens are encrypted at rest. |
+| Sessions | Better Auth opaque database sessions | Secure cookies for web and bearer tokens for native clients; per-device revocation is enabled. |
 | Observability | `tracing` + `tracing-subscriber`, then OpenTelemetry exporter | Structured spans with request/job IDs; never log tokens or sensitive fitness data. |
 | Object storage | S3-compatible storage via presigned operations | Store object keys and metadata in Postgres, never large media blobs. |
 | Background work | PostgreSQL job/outbox tables with `FOR UPDATE SKIP LOCKED` | Add a dedicated broker only after measured throughput demands it. |
@@ -177,7 +179,7 @@ an event or push notification before the database commit succeeds.
 | Search | PostgreSQL full-text search + `pg_trgm` | Enough for usernames, gyms, exercises, and programs initially. |
 | Geospatial | PostgreSQL `cube` + `earthdistance` initially | The current Railway instance does not offer PostGIS. Keep coordinates behind the gym repository so PostGIS remains a future option. Never expose continuous user location by default. |
 | Metrics | Prometheus-compatible metrics | HTTP latency, DB pool, jobs, WebSockets, and product-critical counters. |
-| Testing | Rust unit tests + `sqlx::test` integration tests | Real PostgreSQL for persistence tests; avoid mocking SQL behavior. |
+| Testing | Rust unit tests + API integration tests | Real PostgreSQL for persistence tests; avoid mocking database behavior. |
 | Lint/format | rustfmt + Clippy with warnings denied in CI | Exceptions are local, documented, and rare. |
 
 Crate versions must be selected and locked when implementation begins. Avoid
@@ -191,8 +193,10 @@ maintenance, license, and transitive scope.
 
 Owns credentials, external identities, sessions, email verification, account
 state, and account deletion workflow. It does not own the public user profile.
-Use Argon2id for passwords and standards-based OIDC/OAuth for Google and Apple.
-Rate-limit sign-in, code delivery, code verification, and account recovery.
+Better Auth provides verified password login, Resend-backed email OTP, Google
+OAuth, account linking, opaque sessions, session revocation, and deletion. OTPs
+must remain hashed at rest and must never enter logs. Its database rate limiter
+must stay enabled on every auth route. Apple is deferred.
 
 ### Profile
 

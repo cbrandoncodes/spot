@@ -6,8 +6,8 @@ async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
     telemetry::initialize()?;
 
-    let settings = Settings::from_env().context("invalid application configuration")?;
-    let pool = database::connect(&settings.database)
+    let settings = Settings::database_from_env().context("invalid database configuration")?;
+    let pool = database::connect(&settings)
         .await
         .context("failed to connect to PostgreSQL")?;
 
