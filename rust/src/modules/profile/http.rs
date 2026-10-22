@@ -6,11 +6,10 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, patch, put},
 };
-use better_auth::integrations::axum::CurrentSession;
 use garde::Validate as _;
 use serde::{Deserialize, Serialize};
 
-use crate::{AppState, modules::auth::schema::AppAuthSchema};
+use crate::{AppState, modules::auth::extractor::AuthenticatedUser};
 
 use super::{
     domain::{
@@ -41,7 +40,7 @@ pub fn routes() -> Router<AppState> {
 
 async fn get_discoverable_profile(
     State(state): State<AppState>,
-    _session: CurrentSession<AppAuthSchema>,
+    _identity: AuthenticatedUser,
     Path(username): Path<String>,
 ) -> Result<Json<DiscoverableProfileResponse>, ApiError> {
     let profile = state
@@ -57,19 +56,19 @@ async fn get_discoverable_profile(
 
 async fn get_me(
     State(state): State<AppState>,
-    session: CurrentSession<AppAuthSchema>,
+    identity: AuthenticatedUser,
 ) -> Result<Json<ProfileResponse>, ApiError> {
-    let (user_id, name) = current_identity(&session)?;
+    let (user_id, name) = current_identity(&identity);
     let profile = state.profiles.get_or_create(user_id, name).await?;
     Ok(Json(ProfileResponse::new(&state.profiles, profile)))
 }
 
 async fn update_me(
     State(state): State<AppState>,
-    session: CurrentSession<AppAuthSchema>,
+    identity: AuthenticatedUser,
     Json(request): Json<UpdateProfileRequest>,
 ) -> Result<Json<ProfileResponse>, ApiError> {
-    let (user_id, name) = current_identity(&session)?;
+    let (user_id, name) = current_identity(&identity);
     request.validate().map_err(ApiError::invalid_request)?;
     let changes = request.into_changes()?;
     let profile = state.profiles.update(user_id, name, changes).await?;
@@ -78,10 +77,10 @@ async fn update_me(
 
 async fn update_privacy(
     State(state): State<AppState>,
-    session: CurrentSession<AppAuthSchema>,
+    identity: AuthenticatedUser,
     Json(request): Json<UpdatePrivacyRequest>,
 ) -> Result<Json<ProfileResponse>, ApiError> {
-    let (user_id, name) = current_identity(&session)?;
+    let (user_id, name) = current_identity(&identity);
     request.validate().map_err(ApiError::invalid_request)?;
     let privacy = request.into_changes()?;
     let profile = state
@@ -93,10 +92,10 @@ async fn update_privacy(
 
 async fn username_availability(
     State(state): State<AppState>,
-    session: CurrentSession<AppAuthSchema>,
+    identity: AuthenticatedUser,
     Path(username): Path<String>,
 ) -> Result<Json<UsernameAvailabilityResponse>, ApiError> {
-    let (user_id, _) = current_identity(&session)?;
+    let (user_id, _) = current_identity(&identity);
     let available = state
         .profiles
         .username_available(user_id, &username)
@@ -109,11 +108,11 @@ async fn username_availability(
 
 async fn upload_avatar(
     State(state): State<AppState>,
-    session: CurrentSession<AppAuthSchema>,
+    identity: AuthenticatedUser,
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Json<ProfileResponse>, ApiError> {
-    let (user_id, name) = current_identity(&session)?;
+    let (user_id, name) = current_identity(&identity);
     let content_type = headers
         .get(header::CONTENT_TYPE)
         .and_then(|value| value.to_str().ok())
@@ -129,23 +128,15 @@ async fn upload_avatar(
 
 async fn delete_avatar(
     State(state): State<AppState>,
-    session: CurrentSession<AppAuthSchema>,
+    identity: AuthenticatedUser,
 ) -> Result<Json<ProfileResponse>, ApiError> {
-    let (user_id, name) = current_identity(&session)?;
+    let (user_id, name) = current_identity(&identity);
     let profile = state.profiles.delete_avatar(user_id, name).await?;
     Ok(Json(ProfileResponse::new(&state.profiles, profile)))
 }
 
-fn current_identity(
-    session: &CurrentSession<AppAuthSchema>,
-) -> Result<(uuid::Uuid, &str), ApiError> {
-    let user_id = session
-        .user
-        .id
-        .as_str()
-        .and_then(|value| uuid::Uuid::parse_str(value).ok())
-        .ok_or_else(ApiError::invalid_session)?;
-    let name = session
+fn current_identity(identity: &AuthenticatedUser) -> (uuid::Uuid, &str) {
+    let name = identity
         .user
         .name
         .typed()
@@ -153,7 +144,7 @@ fn current_identity(
         .and_then(Option::as_deref)
         .filter(|name| !name.trim().is_empty())
         .unwrap_or("Spot member");
-    Ok((user_id, name))
+    (identity.user_id, name)
 }
 
 #[derive(Debug, Deserialize, garde::Validate)]
@@ -394,15 +385,6 @@ impl ApiError {
 
     fn invalid_request(error: garde::Report) -> Self {
         Self::invalid("body", error.to_string())
-    }
-
-    fn invalid_session() -> Self {
-        Self {
-            status: StatusCode::UNAUTHORIZED,
-            code: "invalid_session",
-            detail: "The authenticated session does not contain a valid user identity.".to_owned(),
-            field: None,
-        }
     }
 
     fn profile_not_found() -> Self {

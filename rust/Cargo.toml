@@ -29,6 +29,7 @@ sea-orm = { version = "=2.0.0-rc.37", default-features = false, features = [
     "runtime-tokio-rustls",
     "sqlx-postgres",
     "with-chrono",
+    "with-json",
     "with-uuid",
 ] }
 # Derive output and runtime traits must stay on the same SeaORM prerelease.

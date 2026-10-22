@@ -41,6 +41,7 @@ pub fn router(
     Ok(Router::new()
         .nest("/api/auth", auth_routes)
         .merge(modules::auth::http::routes())
+        .merge(modules::fitness_profile::http::routes())
         .merge(modules::health::http::routes())
         .merge(modules::profile::http::routes())
         .with_state(state)

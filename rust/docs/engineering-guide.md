@@ -81,7 +81,9 @@ HTTP adapter -> application use case -> domain
 ```
 
 - Domain code must not import Axum, SeaORM, HTTP DTOs, or vendor SDKs.
-- HTTP handlers authenticate, validate, call one application use case, and map
+- Private HTTP handlers authenticate through the shared `AuthenticatedUser`
+  extractor; do not repeat token or session resolution inside feature modules.
+- HTTP handlers validate, call one application use case, and map
   its result. They do not contain business rules or SQL.
 - Application use cases coordinate domain behavior, repositories, transactions,
   and emitted events.
@@ -221,7 +223,11 @@ uniqueness guarantee.
 Owns onboarding answers and produces a versioned, normalized recommendation
 input. Keep raw answers when useful for editing/audit, but recommendations consume
 the normalized model rather than transport DTOs. Limitations and injuries are
-sensitive and private by default.
+sensitive and private by default. Onboarding groups are resumable workflow/API
+concepts, not tables. Store incomplete, questionnaire-versioned answers as a
+JSONB draft; on completion, atomically materialize relational current state and
+an immutable recommendation-input snapshot. Use optimistic draft revisions to
+prevent cross-device lost updates.
 
 ### Gyms and location
 

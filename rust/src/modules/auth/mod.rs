@@ -1,3 +1,4 @@
+pub mod extractor;
 pub mod http;
 pub mod infrastructure;
 pub mod schema;

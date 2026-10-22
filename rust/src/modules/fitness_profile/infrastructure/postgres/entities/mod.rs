@@ -1,0 +1,10 @@
+pub mod draft;
+pub mod equipment;
+pub mod exercise_avoidance;
+pub mod fitness_profile;
+pub mod goal;
+pub mod movement_constraint;
+pub mod preferred_weekday;
+pub mod snapshot;
+pub mod wellness;
+pub mod workout_preference;

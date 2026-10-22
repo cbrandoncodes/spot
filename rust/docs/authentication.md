@@ -49,6 +49,19 @@ Better Auth is mounted at `/api/auth`. Common routes are:
 `GET /api/me` is the Spot-owned protected-route example. It accepts the session
 cookie or `Authorization: Bearer <session-token>`.
 
+## Protected Spot routes
+
+Spot-owned private handlers use the `AuthenticatedUser` Axum extractor. It
+delegates cookie or bearer-token resolution to Better Auth's `CurrentSession`
+exactly once, validates the application's UUID user ID, and makes the resolved
+Better Auth user and session available to the handler. Do not combine it with a
+second authentication middleware or `CurrentSession`, since that could repeat
+session resolution.
+
+Public routes must be intentionally separated and documented. New private
+routes must accept `AuthenticatedUser`; never parse session cookies, bearer
+tokens, or auth database rows inside domain services or repositories.
+
 ## Running locally
 
 1. Install PostgreSQL and ICU 78. On Apple Silicon with Homebrew, install

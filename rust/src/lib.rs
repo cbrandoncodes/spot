@@ -9,12 +9,14 @@ use axum::extract::FromRef;
 use better_auth::{BetterAuth, seaorm::DatabaseConnection};
 
 use crate::modules::auth::schema::AppAuthSchema;
+use crate::modules::fitness_profile::FitnessProfileService;
 use crate::modules::profile::ProfileService;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: DatabaseConnection,
     pub auth: Arc<BetterAuth<AppAuthSchema>>,
+    pub fitness_profiles: FitnessProfileService,
     pub profiles: ProfileService,
 }
 

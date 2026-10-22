@@ -29,6 +29,8 @@ async fn main() -> anyhow::Result<()> {
         .context("failed to initialize Supabase Storage")?;
     let profiles =
         spot_backend::modules::profile::ProfileService::new(pool.clone(), object_storage);
+    let fitness_profiles =
+        spot_backend::modules::fitness_profile::FitnessProfileService::new(pool.clone());
 
     let listener = tokio::net::TcpListener::bind(settings.http_addr)
         .await
@@ -43,6 +45,7 @@ async fn main() -> anyhow::Result<()> {
         AppState {
             db: pool,
             auth,
+            fitness_profiles,
             profiles,
         },
         &settings.auth.trusted_origins,
