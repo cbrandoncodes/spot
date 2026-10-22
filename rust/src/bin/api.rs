@@ -31,6 +31,7 @@ async fn main() -> anyhow::Result<()> {
         spot_backend::modules::profile::ProfileService::new(pool.clone(), object_storage);
     let fitness_profiles =
         spot_backend::modules::fitness_profile::FitnessProfileService::new(pool.clone());
+    let gyms = spot_backend::modules::gym_directory::GymDirectoryService::new(pool.clone());
 
     let listener = tokio::net::TcpListener::bind(settings.http_addr)
         .await
@@ -46,6 +47,7 @@ async fn main() -> anyhow::Result<()> {
             db: pool,
             auth,
             fitness_profiles,
+            gyms,
             profiles,
         },
         &settings.auth.trusted_origins,

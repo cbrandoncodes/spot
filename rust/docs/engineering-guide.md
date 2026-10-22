@@ -83,6 +83,9 @@ HTTP adapter -> application use case -> domain
 - Domain code must not import Axum, SeaORM, HTTP DTOs, or vendor SDKs.
 - Private HTTP handlers authenticate through the shared `AuthenticatedUser`
   extractor; do not repeat token or session resolution inside feature modules.
+- Precise device coordinates are ephemeral request data. Send them in request
+  bodies, never persist them to user records, and never include them in logs or
+  analytics.
 - HTTP handlers validate, call one application use case, and map
   its result. They do not contain business rules or SQL.
 - Application use cases coordinate domain behavior, repositories, transactions,
