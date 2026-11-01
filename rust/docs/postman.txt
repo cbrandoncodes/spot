@@ -1,0 +1,191 @@
+SPOT POSTMAN TESTING: OTP AUTH TO FITNESS PROFILE
+
+Prerequisites
+1. Start the API from rust/:
+   cargo watch -x 'run --bin api'
+2. In Postman, create these environment variables:
+   base_url = http://127.0.0.1:8080
+   email = your real test email
+   spot_token = leave empty
+   onboarding_revision = leave empty
+3. Use Content-Type: application/json for requests with a JSON body.
+
+1. Request a sign-in OTP
+POST {{base_url}}/api/auth/email-otp/send-verification-otp
+
+Body:
+{
+  "email": "{{email}}",
+  "type": "sign-in"
+}
+
+Expected: 200 response. Retrieve the six-digit code from the Spot email.
+
+2. Exchange the OTP for a session
+POST {{base_url}}/api/auth/sign-in/email-otp
+
+Body:
+{
+  "email": "{{email}}",
+  "otp": "123456",
+  "name": "Postman Tester"
+}
+
+Replace 123456 with the received code. Add this Post-response script:
+
+const body = pm.response.json();
+pm.environment.set("spot_token", body.token);
+
+Expected: 200 response containing token and user. Postman may also store the
+session cookie, but the remaining steps deliberately test Bearer authentication.
+
+3. Verify the authenticated session
+GET {{base_url}}/api/me
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Expected: 200 response containing the authenticated user. A missing or invalid
+token should return 401.
+
+4. Inspect the supported onboarding values
+GET {{base_url}}/api/onboarding/options
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Expected: 200 response containing the valid goal, experience, equipment,
+workout, constraint, weekday, and related option codes.
+
+5. Create or fetch the onboarding draft
+GET {{base_url}}/api/onboarding
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Add this Post-response script:
+
+const body = pm.response.json();
+pm.environment.set("onboarding_revision", body.revision);
+
+Expected: 200 response. The first request normally returns revision 0. Always
+use the returned revision instead of assuming its value.
+
+6. Save goals and experience
+PATCH {{base_url}}/api/onboarding/groups/goals-experience
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Body:
+{
+  "revision": {{onboarding_revision}},
+  "primaryGoal": "build_muscle",
+  "secondaryGoals": ["get_stronger"],
+  "experienceLevel": "beginner",
+  "currentActivityLevel": "lightly_active"
+}
+
+Use the revision-saving Post-response script from step 5 on this request and
+every remaining PATCH request.
+
+7. Save schedule and equipment
+PATCH {{base_url}}/api/onboarding/groups/schedule-setup
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Body:
+{
+  "revision": {{onboarding_revision}},
+  "daysPerWeek": 3,
+  "sessionDurationMinutes": 45,
+  "trainingEnvironment": "gym",
+  "availableEquipment": ["dumbbells", "adjustable_bench", "cable_station"],
+  "preferredWeekdays": ["monday", "wednesday", "friday"]
+}
+
+8. Save training preferences
+PATCH {{base_url}}/api/onboarding/groups/training-preferences
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Body:
+{
+  "revision": {{onboarding_revision}},
+  "preferredWorkoutTypes": ["hypertrophy", "strength"],
+  "dislikedExercises": [
+    {
+      "exerciseCode": "burpee",
+      "preference": "never_include"
+    }
+  ],
+  "coachingStyle": "balanced",
+  "startingIntensity": "gentle",
+  "consistencyBarrier": "My work schedule changes each week."
+}
+
+9. Save movement and wellness information
+PATCH {{base_url}}/api/onboarding/groups/movement-wellness
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Body:
+{
+  "revision": {{onboarding_revision}},
+  "movementConstraints": [],
+  "accessibilityNeeds": null,
+  "heightMm": null,
+  "weightGrams": null,
+  "unitSystem": "metric",
+  "acknowledgeSensitiveData": false
+}
+
+10. Confirm the complete draft
+GET {{base_url}}/api/onboarding
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Expected: all four groups have status complete and their saved values appear in
+answers. Save the latest revision again with the script from step 5.
+
+11. Complete onboarding and create the normalized fitness profile
+POST {{base_url}}/api/onboarding/complete
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Body:
+{
+  "revision": {{onboarding_revision}}
+}
+
+Expected: 200 response containing the completed private fitness profile and its
+profile revision.
+
+12. Fetch the persisted fitness profile
+GET {{base_url}}/api/fitness-profile/me
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Expected: 200 response containing the normalized profile. Verify that the goal,
+schedule, equipment, preferences, and wellness values match the submitted data.
+
+Useful negative checks
+- Remove Authorization from a private route: expect 401.
+- Send an unsupported option code: expect 422 validation response.
+- Send daysPerWeek outside 1-7 or sessionDurationMinutes outside 15-180: expect
+  422 validation response.
+- Reuse an old onboarding revision after a successful update: expect
+  409 onboarding_revision_conflict.
+- Request /api/fitness-profile/me for a user who has not completed onboarding:
+  expect 404.
+
+Notes
+- OTPs expire after five minutes and repeated incorrect attempts invalidate them.
+- OTP endpoints are rate-limited; avoid repeatedly requesting codes.
+- Never commit real OTPs, Bearer tokens, or Postman environment exports.

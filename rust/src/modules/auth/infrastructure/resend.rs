@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{error::Error as _, time::Duration};
 
 use async_trait::async_trait;
 use better_auth::plugins::{EmailOtpMessage, SendEmailOtp};
@@ -49,7 +49,7 @@ impl SendEmailOtp for ResendOtpSender {
             .send()
             .await
             .map_err(|error| {
-                tracing::error!(error = %error, "Resend OTP request failed");
+                log_transport_error(&error);
                 delivery_error()
             })?;
 
@@ -73,6 +73,28 @@ struct SendEmailRequest<'a> {
 
 fn log_rejection(status: StatusCode) {
     tracing::error!(%status, "Resend rejected OTP email");
+}
+
+fn log_transport_error(error: &reqwest::Error) {
+    let mut causes = Vec::new();
+    let mut source = error.source();
+
+    while let Some(cause) = source {
+        causes.push(cause.to_string());
+        source = cause.source();
+    }
+
+    tracing::error!(
+        error = ?error,
+        causes = ?causes,
+        is_timeout = error.is_timeout(),
+        is_connect = error.is_connect(),
+        is_request = error.is_request(),
+        is_body = error.is_body(),
+        is_decode = error.is_decode(),
+        status = ?error.status(),
+        "Resend OTP request failed before receiving an HTTP response"
+    );
 }
 
 fn delivery_error() -> AuthError {
