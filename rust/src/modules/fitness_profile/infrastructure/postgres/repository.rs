@@ -261,7 +261,9 @@ impl FitnessProfileRepository {
             },
             schedule_setup: ScheduleSetupAnswers {
                 days_per_week: base.training_days_per_week,
-                session_duration_minutes: base.session_duration_minutes,
+                minimum_duration_minutes: base.minimum_duration_minutes,
+                preferred_duration_minutes: base.preferred_duration_minutes,
+                maximum_duration_minutes: base.maximum_duration_minutes,
                 training_environment: base.training_environment.parse()?,
                 available_equipment: equipment
                     .iter()
@@ -343,7 +345,9 @@ fn populate_profile_model(
         .as_str()
         .to_owned());
     active.training_days_per_week = Set(profile.schedule_setup.days_per_week);
-    active.session_duration_minutes = Set(profile.schedule_setup.session_duration_minutes);
+    active.minimum_duration_minutes = Set(profile.schedule_setup.minimum_duration_minutes);
+    active.preferred_duration_minutes = Set(profile.schedule_setup.preferred_duration_minutes);
+    active.maximum_duration_minutes = Set(profile.schedule_setup.maximum_duration_minutes);
     active.training_environment = Set(profile
         .schedule_setup
         .training_environment

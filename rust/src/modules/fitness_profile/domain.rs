@@ -340,7 +340,9 @@ impl GoalsExperienceAnswers {
 #[serde(rename_all = "camelCase")]
 pub struct ScheduleSetupAnswers {
     pub days_per_week: i16,
-    pub session_duration_minutes: i16,
+    pub minimum_duration_minutes: i16,
+    pub preferred_duration_minutes: i16,
+    pub maximum_duration_minutes: i16,
     pub training_environment: TrainingEnvironment,
     pub available_equipment: Vec<Equipment>,
     pub preferred_weekdays: Vec<Weekday>,
@@ -354,12 +356,39 @@ impl ScheduleSetupAnswers {
                 "must be between 1 and 7",
             ));
         }
-        if !(15..=180).contains(&self.session_duration_minutes) {
+        if !(15..=180).contains(&self.minimum_duration_minutes) {
             return Err(ValidationError::new(
-                "sessionDurationMinutes",
+                "minimumDurationMinutes",
                 "must be between 15 and 180",
             ));
         }
+        if !(15..=180).contains(&self.preferred_duration_minutes) {
+            return Err(ValidationError::new(
+                "preferredDurationMinutes",
+                "must be between 15 and 180",
+            ));
+        }
+        if !(15..=180).contains(&self.maximum_duration_minutes) {
+            return Err(ValidationError::new(
+                "maximumDurationMinutes",
+                "must be between 15 and 180",
+            ));
+        }
+
+        if !(&self.minimum_duration_minutes <= &self.preferred_duration_minutes) {
+            return Err(ValidationError::new(
+                "minimum_duration_minutes",
+                "must be less than the preferred duration minutes",
+            ));
+        }
+
+        if !(&self.preferred_duration_minutes <= &self.maximum_duration_minutes) {
+            return Err(ValidationError::new(
+                "preferredDurationMinutes",
+                "must be less than the maximum duration minutes",
+            ));
+        }
+
         validate_unique_nonempty("availableEquipment", &self.available_equipment)?;
         validate_unique("preferredWeekdays", &self.preferred_weekdays)?;
         Ok(())
@@ -682,7 +711,9 @@ mod tests {
     fn schedule_rejects_duplicate_equipment() {
         let answers = ScheduleSetupAnswers {
             days_per_week: 3,
-            session_duration_minutes: 45,
+            minimum_duration_minutes: 45,
+            preferred_duration_minutes: 45,
+            maximum_duration_minutes: 45,
             training_environment: TrainingEnvironment::Gym,
             available_equipment: vec![Equipment::Dumbbells, Equipment::Dumbbells],
             preferred_weekdays: Vec::new(),

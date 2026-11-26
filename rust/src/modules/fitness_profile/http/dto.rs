@@ -48,7 +48,11 @@ pub(super) struct ScheduleSetupRequest {
     #[garde(range(min = 1, max = 7))]
     days_per_week: i16,
     #[garde(range(min = 15, max = 180))]
-    session_duration_minutes: i16,
+    minimum_duration_minutes: i16,
+    #[garde(range(min = 15, max = 180))]
+    preferred_duration_minutes: i16,
+    #[garde(range(min = 15, max = 180))]
+    maximum_duration_minutes: i16,
     #[garde(length(bytes, max = 32))]
     training_environment: String,
     #[garde(length(min = 1, max = 20), inner(length(bytes, max = 64)))]
@@ -61,7 +65,9 @@ impl ScheduleSetupRequest {
     pub(super) fn into_domain(self) -> Result<ScheduleSetupAnswers, ValidationError> {
         Ok(ScheduleSetupAnswers {
             days_per_week: self.days_per_week,
-            session_duration_minutes: self.session_duration_minutes,
+            minimum_duration_minutes: self.minimum_duration_minutes,
+            preferred_duration_minutes: self.preferred_duration_minutes,
+            maximum_duration_minutes: self.maximum_duration_minutes,
             training_environment: self.training_environment.parse()?,
             available_equipment: parse_values(&self.available_equipment)?,
             preferred_weekdays: parse_values(&self.preferred_weekdays)?,
