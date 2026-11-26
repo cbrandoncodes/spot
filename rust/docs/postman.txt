@@ -99,7 +99,9 @@ Body:
 {
   "revision": {{onboarding_revision}},
   "daysPerWeek": 3,
-  "sessionDurationMinutes": 45,
+  "minimumDurationMinutes": 30,
+  "preferredDurationMinutes": 45,
+  "maximumDurationMinutes": 60,
   "trainingEnvironment": "gym",
   "availableEquipment": ["dumbbells", "adjustable_bench", "cable_station"],
   "preferredWeekdays": ["monday", "wednesday", "friday"]
@@ -178,8 +180,9 @@ schedule, equipment, preferences, and wellness values match the submitted data.
 Useful negative checks
 - Remove Authorization from a private route: expect 401.
 - Send an unsupported option code: expect 422 validation response.
-- Send daysPerWeek outside 1-7 or sessionDurationMinutes outside 15-180: expect
-  422 validation response.
+- Send daysPerWeek outside 1-7, any duration outside 15-180, an invalid
+  minimum/preferred/maximum order, or fewer preferredWeekdays than daysPerWeek:
+  expect 422 validation response.
 - Reuse an old onboarding revision after a successful update: expect
   409 onboarding_revision_conflict.
 - Request /api/fitness-profile/me for a user who has not completed onboarding:

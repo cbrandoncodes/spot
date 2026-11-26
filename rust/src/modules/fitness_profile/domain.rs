@@ -375,22 +375,31 @@ impl ScheduleSetupAnswers {
             ));
         }
 
-        if !(&self.minimum_duration_minutes <= &self.preferred_duration_minutes) {
+        if self.minimum_duration_minutes > self.preferred_duration_minutes {
             return Err(ValidationError::new(
-                "minimum_duration_minutes",
-                "must be less than the preferred duration minutes",
+                "minimumDurationMinutes",
+                "must be less than or equal to preferredDurationMinutes",
             ));
         }
 
-        if !(&self.preferred_duration_minutes <= &self.maximum_duration_minutes) {
+        if self.preferred_duration_minutes > self.maximum_duration_minutes {
             return Err(ValidationError::new(
                 "preferredDurationMinutes",
-                "must be less than the maximum duration minutes",
+                "must be less than or equal to maximumDurationMinutes",
             ));
         }
 
         validate_unique_nonempty("availableEquipment", &self.available_equipment)?;
         validate_unique("preferredWeekdays", &self.preferred_weekdays)?;
+        if !self.preferred_weekdays.is_empty()
+            && usize::try_from(self.days_per_week).unwrap_or(usize::MAX)
+                > self.preferred_weekdays.len()
+        {
+            return Err(ValidationError::new(
+                "preferredWeekdays",
+                "must include at least daysPerWeek entries when provided",
+            ));
+        }
         Ok(())
     }
 }
@@ -672,7 +681,7 @@ mod tests {
     use super::{
         ActivityLevel, Equipment, ExperienceLevel, Goal, GoalsExperienceAnswers,
         MovementWellnessAnswers, OnboardingAnswersV1, ScheduleSetupAnswers, TrainingEnvironment,
-        UnitSystem,
+        UnitSystem, Weekday,
     };
 
     #[test]
@@ -726,6 +735,65 @@ mod tests {
                 .field,
             "availableEquipment"
         );
+    }
+
+    #[test]
+    fn schedule_rejects_invalid_duration_order() {
+        let answers = ScheduleSetupAnswers {
+            days_per_week: 3,
+            minimum_duration_minutes: 60,
+            preferred_duration_minutes: 45,
+            maximum_duration_minutes: 90,
+            training_environment: TrainingEnvironment::Gym,
+            available_equipment: vec![Equipment::Dumbbells],
+            preferred_weekdays: Vec::new(),
+        };
+
+        assert_eq!(
+            answers
+                .validate()
+                .expect_err("minimum duration cannot exceed preferred duration")
+                .field,
+            "minimumDurationMinutes"
+        );
+    }
+
+    #[test]
+    fn schedule_rejects_frequency_above_available_weekdays() {
+        let answers = ScheduleSetupAnswers {
+            days_per_week: 3,
+            minimum_duration_minutes: 30,
+            preferred_duration_minutes: 45,
+            maximum_duration_minutes: 60,
+            training_environment: TrainingEnvironment::Gym,
+            available_equipment: vec![Equipment::Dumbbells],
+            preferred_weekdays: vec![Weekday::Monday, Weekday::Wednesday],
+        };
+
+        assert_eq!(
+            answers
+                .validate()
+                .expect_err("frequency cannot exceed supplied weekday availability")
+                .field,
+            "preferredWeekdays"
+        );
+    }
+
+    #[test]
+    fn schedule_accepts_unspecified_weekday_availability() {
+        let answers = ScheduleSetupAnswers {
+            days_per_week: 5,
+            minimum_duration_minutes: 30,
+            preferred_duration_minutes: 45,
+            maximum_duration_minutes: 60,
+            training_environment: TrainingEnvironment::Gym,
+            available_equipment: vec![Equipment::Dumbbells],
+            preferred_weekdays: Vec::new(),
+        };
+
+        answers
+            .validate()
+            .expect("an empty weekday list means unrestricted availability");
     }
 
     #[test]

@@ -73,15 +73,19 @@ The primary goal is required. Up to two unique secondary goals are allowed.
 {
   "revision": 1,
   "daysPerWeek": 3,
-  "sessionDurationMinutes": 45,
+  "minimumDurationMinutes": 30,
+  "preferredDurationMinutes": 45,
+  "maximumDurationMinutes": 60,
   "trainingEnvironment": "gym",
   "availableEquipment": ["dumbbells", "adjustable_bench", "cable_station"],
   "preferredWeekdays": ["monday", "wednesday", "friday"]
 }
 ```
 
-Days are restricted to `1..=7`; duration is `15..=180` minutes. Equipment must
-contain at least one unique supported code. Preferred weekdays are optional.
+Days are restricted to `1..=7`; every duration is `15..=180` minutes and must
+satisfy `minimum <= preferred <= maximum`. Equipment must contain at least one
+unique supported code. Preferred weekdays are optional; when supplied, their
+count must be at least the requested training frequency.
 
 ### `PATCH /api/onboarding/groups/training-preferences`
 

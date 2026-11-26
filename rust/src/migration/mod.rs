@@ -5,6 +5,7 @@ mod m20261021_000002_profiles;
 mod m20261022_000003_fitness_profile;
 mod m20261022_000004_gym_directory;
 mod m20261102_000001_available_weekdays;
+mod m20261102_000002_session_duration_range;
 
 pub struct Migrator;
 
@@ -17,6 +18,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20261022_000003_fitness_profile::Migration),
             Box::new(m20261022_000004_gym_directory::Migration),
             Box::new(m20261102_000001_available_weekdays::Migration),
+            Box::new(m20261102_000002_session_duration_range::Migration),
         ]
     }
 }
