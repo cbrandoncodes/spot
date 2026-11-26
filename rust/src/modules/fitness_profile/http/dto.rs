@@ -199,6 +199,13 @@ pub(super) struct CompleteOnboardingRequest {
     pub(super) revision: i64,
 }
 
+#[derive(Debug, Deserialize, garde::Validate)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(super) struct ReopenOnboardingRequest {
+    #[garde(range(min = 0))]
+    pub(super) revision: i64,
+}
+
 fn parse_values<T>(values: &[String]) -> Result<Vec<T>, ValidationError>
 where
     T: FromStr<Err = ValidationError>,

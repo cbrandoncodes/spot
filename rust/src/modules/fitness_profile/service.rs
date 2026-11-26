@@ -135,6 +135,26 @@ impl FitnessProfileService {
             .map_err(Into::into)
     }
 
+    pub async fn reopen(
+        &self,
+        user_id: Uuid,
+        revision: i64,
+    ) -> Result<OnboardingDraft, ServiceError> {
+        let draft = self.get_onboarding(user_id).await?;
+        ensure_revision(revision, draft.revision)?;
+        if draft.completed_at.is_none() || draft.current_group != OnboardingGroup::Complete {
+            return Err(ServiceError::OnboardingNotComplete);
+        }
+
+        self.save(
+            user_id,
+            revision,
+            OnboardingGroup::MovementWellness,
+            &draft.answers,
+        )
+        .await
+    }
+
     pub async fn get_profile(
         &self,
         user_id: Uuid,
@@ -192,6 +212,8 @@ pub enum ServiceError {
     InvalidStoredDraft(serde_json::Error),
     #[error("completed onboarding has no fitness profile")]
     CompletedProfileMissing,
+    #[error("onboarding is not currently complete")]
+    OnboardingNotComplete,
     #[error("fitness profile persistence failed")]
     Repository(RepositoryError),
 }

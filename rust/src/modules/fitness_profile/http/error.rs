@@ -69,6 +69,12 @@ impl From<ServiceError> for ApiError {
                 tracing::error!("completed onboarding has no fitness profile");
                 internal_error()
             }
+            ServiceError::OnboardingNotComplete => Self {
+                status: StatusCode::CONFLICT,
+                code: "onboarding_not_complete",
+                detail: "Only completed onboarding can be reopened.".to_owned(),
+                field: None,
+            },
             ServiceError::Repository(error) => {
                 tracing::error!(error = %error, "fitness profile repository operation failed");
                 internal_error()

@@ -14,7 +14,7 @@ use crate::{AppState, modules::auth::extractor::AuthenticatedUser};
 use self::{
     dto::{
         CompleteOnboardingRequest, FitnessProfileResponse, GoalsExperienceRequest,
-        MovementWellnessRequest, OnboardingResponse, ScheduleSetupRequest,
+        MovementWellnessRequest, OnboardingResponse, ReopenOnboardingRequest, ScheduleSetupRequest,
         TrainingPreferencesRequest,
     },
     error::ApiError,
@@ -42,6 +42,7 @@ pub fn routes() -> Router<AppState> {
             patch(save_movement_wellness),
         )
         .route("/api/onboarding/complete", post(complete_onboarding))
+        .route("/api/onboarding/reopen", post(reopen_onboarding))
         .route("/api/fitness-profile/me", get(get_fitness_profile))
 }
 
@@ -131,6 +132,19 @@ async fn complete_onboarding(
         .complete(identity.user_id, request.revision)
         .await?;
     Ok(Json(FitnessProfileResponse::from(profile)))
+}
+
+async fn reopen_onboarding(
+    State(state): State<AppState>,
+    identity: AuthenticatedUser,
+    Json(request): Json<ReopenOnboardingRequest>,
+) -> Result<Json<OnboardingResponse>, ApiError> {
+    request.validate().map_err(ApiError::invalid_request)?;
+    let draft = state
+        .fitness_profiles
+        .reopen(identity.user_id, request.revision)
+        .await?;
+    Ok(Json(OnboardingResponse::from(draft)))
 }
 
 async fn get_fitness_profile(

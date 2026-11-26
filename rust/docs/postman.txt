@@ -177,6 +177,22 @@ Token: {{spot_token}}
 Expected: 200 response containing the normalized profile. Verify that the goal,
 schedule, equipment, preferences, and wellness values match the submitted data.
 
+13. Reopen completed onboarding for another completion test
+POST {{base_url}}/api/onboarding/reopen
+
+Authorization: Bearer Token
+Token: {{spot_token}}
+
+Body:
+{
+  "revision": {{onboarding_revision}}
+}
+
+First fetch GET /api/onboarding and save its latest revision. Expected: 200 with
+completedAt set to null and revision incremented once. Save the returned revision
+before calling /api/onboarding/complete again. Existing profiles and snapshots
+are preserved.
+
 Useful negative checks
 - Remove Authorization from a private route: expect 401.
 - Send an unsupported option code: expect 422 validation response.

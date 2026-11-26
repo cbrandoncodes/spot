@@ -148,6 +148,20 @@ values.
 
 Returns the completed private fitness profile and its revision.
 
+### `POST /api/onboarding/reopen`
+
+```json
+{
+  "revision": 5
+}
+```
+
+Reopens a completed onboarding draft without deleting its answers, current
+fitness profile or immutable snapshots. The request must contain the latest
+draft revision. It clears `completedAt`, advances the draft revision and returns
+the draft so it can be completed again. A draft that is not complete returns
+`409 onboarding_not_complete`.
+
 ### `GET /api/fitness-profile/me`
 
 Returns the authenticated user's normalized current fitness profile. It returns
