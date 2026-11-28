@@ -54,14 +54,18 @@ Cursor remains the main app for roughly 10–11 minutes.
 
 ## Recording steps
 
-### 1. Opening and baseline — 1.5 minutes
+### 1. Aim briefing and baseline — 1.5 minutes
 
-State:
+Read this opening before taking any actions; it should take under one minute:
 
-> Spot is a Rust backend for a guided workout and social fitness platform. I am
-> producing a deterministic diagnosis of a timing-dependent onboarding completion
-> failure. The output will let the next engineering task implement and verify a
-> fix from measured evidence rather than assumption.
+> Spot is an existing Rust and PostgreSQL backend for a guided workout and social
+> fitness platform. In this task, I will reproduce and diagnose a timing-dependent
+> defect in its onboarding completion endpoint. I will send two identical requests,
+> deliberately control their database-lock timing, and correlate the HTTP responses
+> with live PostgreSQL lock and persistence evidence. I am diagnosing rather than
+> fixing the behavior in this first chain task. My outputs will be a reusable Postman
+> reproducer, lock-inspection SQL, and a concise diagnosis with measurable acceptance
+> criteria for the follow-up implementation task.
 
 In Cursor, show the clean baseline and run:
 
@@ -316,19 +320,31 @@ Complete each `Answer:` section in
 recording. Keep the prompts unchanged so the blank input and completed output are
 directly comparable.
 
-Epilogue:
+Read this epilogue after completing and saving all three outputs; it should take
+under two minutes:
 
-> I reproduced the failure deterministically, observed both API transactions
-> waiting on the same PostgreSQL row, and proved that persistence remains atomic.
-> The defect is the interaction between the revision predicate and post-wait row
-> state. The next chain task can now implement against explicit, measurable
-> acceptance criteria.
+> I have completed the reproduction-only stage of this chain. Two identical
+> onboarding completion commands using the same expected revision produced a 200
+> success and a 409 revision conflict. PostgreSQL evidence showed the waiting and
+> blocking sessions on the same draft row under READ COMMITTED isolation. After the
+> lock was released, the database contained one profile result and one immutable
+> snapshot, so the transaction remained atomic; the defect is inconsistent retry
+> behavior rather than duplicated persistence.
+>
+> The code trace explains the timing dependency: the query combines the optimistic
+> revision predicate with `FOR UPDATE`, so the waiting statement is re-evaluated
+> after the winner advances the revision and no longer matches the original command.
+> I have saved the sanitized reproducer, reusable lock-inspection SQL, and completed
+> diagnosis. The next chain task can now change the locking decision safely and prove
+> four explicit outcomes: both identical concurrent requests succeed, both return
+> the same profile revision, only one snapshot is stored, and genuinely stale
+> revisions still return 409.
 
 ## Timing
 
 | Phase | Time |
 | --- | ---: |
-| Opening and baseline | 1.5 min |
+| Aim briefing and baseline | 1.5 min |
 | Code-path inspection | 2.5 min |
 | Reset test state | 2 min |
 | Hold coordination row | 2 min |
